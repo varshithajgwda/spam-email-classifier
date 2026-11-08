@@ -1,160 +1,93 @@
-# Spam Email Classification Using Machine Learning
+# Spam Mail Detector: five classifiers with a Streamlit app
 
-## 1. Problem Statement
+Spam e-mail detection with five classification models and a Streamlit app.
 
-Spam email classification is an important application of machine learning that helps distinguish unwanted or fraudulent emails from legitimate messages.
+- **GitHub repository:** https://github.com/varshithajgwda/spam-email-classifier
+- **Live app:** https://varshithajgwda-spam-email-classifier-app-ofaxnb.streamlit.app/
 
-The objective of this project is to develop a machine learning-based spam email classification system that identifies whether an email is spam or not spam using numerical features extracted from email messages.
+## a. Problem statement
 
-Five machine learning classification algorithms are implemented and evaluated on the same dataset:
+Unwanted e-mail wastes time and can carry scams, but a filter that blocks genuine mail is just as harmful. This project decides whether an e-mail is spam (1) or not spam (0) from 57 numbers that summarise its content: how often certain words and symbols occur, and how much of the text is in capital letters. Five classifiers are trained on the same train/test split, compared on six metrics, saved as pipelines, and used by a Streamlit app that scores an uploaded test file without retraining.
 
-1. Logistic Regression
-2. Decision Tree Classifier
-3. K-Nearest Neighbors (KNN)
-4. Naive Bayes Classifier
-5. Support Vector Machine (SVM)
+## b. Dataset description
 
-The performance of each model is evaluated using Accuracy, AUC, Precision, Recall, F1 Score, and Matthews Correlation Coefficient (MCC).
-
-An interactive web application is developed using Streamlit to allow users to upload test data, select a trained model, and view its evaluation results.
-
-## 2. Dataset Description
-
-**Dataset Name:** Spambase Dataset
-
-**Dataset Source:** UCI Machine Learning Repository
-
-The Spambase dataset is used to develop and evaluate the spam email classification models.
-
-| Dataset Property | Description |
+| Item | Value |
 |---|---|
-| Dataset Name | Spambase |
-| Total Instances | 4,601 |
-| Number of Features | 57 |
-| Target Variable | is_spam |
-| Classification Type | Binary Classification |
-| Class 0 | Not Spam |
-| Class 1 | Spam |
-| Feature Type | Numerical |
+| Dataset name and source | Spambase, UCI Machine Learning Repository (created at Hewlett-Packard Labs). https://archive.ics.uci.edu/dataset/94/spambase |
+| Type of problem | Binary classification |
+| Number of instances | 4,601 in the original file; 4,210 after removing 391 duplicate rows |
+| Number of features | 57 numeric features: 48 word-frequency percentages, 6 character-frequency percentages (; ( [ ! $ #) and 3 capital-letter statistics (average run length, longest run, total capitals) |
+| Target variable and classes | `is_spam`: 0 = not spam, 1 = spam |
+| Missing values / duplicates | No missing values. 391 exact duplicate rows were dropped before splitting, so the same email cannot appear in both train and test. |
+| Preprocessing | All features are numeric, so no encoding is needed. `StandardScaler` is part of the pipeline for Logistic Regression, KNN and SVM, so it is fitted on training data only and saved inside the model file. Decision Tree and Naive Bayes use the raw values. |
+| Train / test split | 80/20, stratified on the target, `random_state = 2026`: 3,368 training rows and 842 test rows |
+| Class distribution (not spam / spam) | Original: 2,788 / 1,813. After de-duplication: 2,531 / 1,679. Train: 2,025 / 1,343. Test: 506 / 336. |
 
-The dataset contains 57 numerical features representing characteristics of email messages. The target variable `is_spam` indicates whether an email is spam or legitimate.
+Precision, Recall and F1 are reported for the spam class (the positive class, label 1). AUC is computed from the predicted spam probabilities, and MCC uses all four cells of the confusion matrix, which makes it reliable for the mild class imbalance (about 60% not spam, 40% spam).
 
-The dataset is used to train and evaluate five different machine learning classification algorithms.
-
-## 3. GitHub Repository Link
-
-**GitHub Repository:**
+## c. GitHub repository link
 
 https://github.com/varshithajgwda/spam-email-classifier
 
-The repository contains the application source code, dataset, test data, saved machine learning models, evaluation metrics, and dependency requirements.
+Files in the repository:
 
-**Live Streamlit Application:**
+- `app.py` : the Streamlit app, which loads the saved models and never retrains
+- `requirements.txt` : dependencies with the versions used for training
+- `README.md` : this document
+- `test_data.csv` : the 842 held-out test emails with the `is_spam` column
+- `data/spambase.csv` : the dataset (57 features plus `is_spam`)
+- `model/` : the five saved pipelines (`logistic_regression`, `decision_tree`, `knn`, `naive_bayes` and `svm`, each a `.joblib` file)
+- `results/metrics.csv` : the metrics table of all five models
+- `spam_classifier.ipynb` : the notebook that loads the data, trains and evaluates the models and saves them
 
-https://varshithajgwda-spam-email-classifier-app-ofaxnb.streamlit.app/
+To run it locally: `pip install -r requirements.txt`, then `streamlit run app.py`.
 
-## 4. Models Used and Performance Comparison
+## d. Models used
 
-Five machine learning classification algorithms are implemented using the Spambase dataset.
-
-The following evaluation metrics are used to compare their performance:
-
-- Accuracy
-- AUC Score
-- Precision
-- Recall
-- F1 Score
-- Matthews Correlation Coefficient (MCC)
-
-### Model Comparison Table
+Results on the 842 test emails (the best value in each column is in bold):
 
 | ML Model Name | Accuracy | AUC | Precision | Recall | F1 | MCC |
-|---|---:|---:|---:|---:|---:|---:|
+|---|---|---|---|---|---|---|
 | Logistic Regression | 0.9097 | 0.9627 | 0.9088 | 0.8601 | 0.8838 | 0.8109 |
 | Decision Tree | 0.9062 | 0.9335 | 0.9003 | 0.8601 | 0.8798 | 0.8035 |
 | KNN | 0.8955 | 0.9528 | 0.9079 | 0.8214 | 0.8625 | 0.7811 |
-| Naive Bayes | 0.8076 | 0.9405 | 0.6875 | 0.9494 | 0.7975 | 0.6526 |
-| Support Vector Machine | 0.9264 | 0.9737 | 0.9281 | 0.8839 | 0.9055 | 0.8459 |
+| Naive Bayes | 0.8076 | 0.9405 | 0.6875 | **0.9494** | 0.7975 | 0.6526 |
+| Support Vector Machine | **0.9264** | **0.9737** | **0.9281** | 0.8839 | **0.9055** | **0.8459** |
 
-### Observations on Model Performance
+Settings: Logistic Regression `max_iter=2000`, `C=1`; Decision Tree `max_depth=7`; KNN `k=9`; Gaussian Naive Bayes with default settings; SVM with RBF kernel, `C=3` and `probability=True`. Random seed 2026 wherever a seed is used.
 
-| ML Model Name | Observation About Model Performance |
+Confusion matrices (rows: actual, columns: predicted):
+
+| ML Model Name | TN | FP | FN | TP |
+|---|---|---|---|---|
+| Logistic Regression | 477 | 29 | 47 | 289 |
+| Decision Tree | 474 | 32 | 47 | 289 |
+| KNN | 478 | 28 | 60 | 276 |
+| Naive Bayes | 361 | 145 | 17 | 319 |
+| Support Vector Machine | 483 | 23 | 39 | 297 |
+
+### Observations
+
+| ML Model Name | Observation about model performance |
 |---|---|
-| Logistic Regression | Achieved an accuracy of 90.97% and an AUC score of 0.9627. It demonstrated good classification performance with balanced precision and recall. |
-| Decision Tree | Achieved an accuracy of 90.62%. It provided good classification performance, with results close to Logistic Regression. |
-| KNN | Achieved an accuracy of 89.55% and precision of 0.9079. Its recall was comparatively lower at 0.8214. |
-| Naive Bayes | Achieved the highest recall of 0.9494, indicating good identification of spam emails. However, its precision was comparatively lower at 0.6875. |
-| Support Vector Machine | Achieved the highest accuracy (0.9264), AUC (0.9737), precision (0.9281), F1 score (0.9055), and MCC (0.8459) among all five models. |
+| Logistic Regression | A strong linear baseline: accuracy 0.9097, AUC 0.9627 and MCC 0.8109, second best on all three. It marks 29 genuine emails as spam and misses 47 spam emails. Once the features are scaled, a straight boundary separates most spam from normal mail, and it trains in a fraction of a second. |
+| Decision Tree | Accuracy 0.9062 and recall 0.8601 (the same as Logistic Regression), with 32 false alarms and 47 missed spam emails. Its AUC (0.9335) is clearly lower than Logistic Regression, KNN and SVM because a depth-7 tree gives only coarse probability scores. It needs no scaling and is easy to explain, but it ranks emails less well. |
+| KNN | Accuracy 0.8955 and the lowest recall (0.8214): 60 spam emails slip through. Precision is good (0.9079, 28 false alarms). The 57 features are on very different scales, so it only works after standardisation, and the saved model keeps the whole training set, which makes prediction slower than the other models. |
+| Naive Bayes | The weakest overall: accuracy 0.8076, precision 0.6875 and MCC 0.6526. It has the highest recall (0.9494, only 17 spam emails missed) but flags 145 genuine emails as spam. Word frequencies are correlated and mostly zero, which breaks the independence and Gaussian assumptions, so it over-predicts spam. |
+| Support Vector Machine | The best model: accuracy 0.9264, AUC 0.9737, precision 0.9281, F1 0.9055 and MCC 0.8459. Only 23 genuine emails are flagged and 39 spam emails are missed. The RBF kernel captures non-linear patterns in the word and capital-letter features that the linear model cannot. |
+| **Overall winner** | **Support Vector Machine.** It leads on five of six metrics and loses only Recall, to Naive Bayes (0.9494 against 0.8839), but Naive Bayes pays for that with 145 false alarms. For a spam filter, losing a genuine email is costly, so the high precision of SVM matters most. Logistic Regression is a close second and a good fast alternative. |
 
-### Overall Winner for the Dataset
+## e. Streamlit app
 
-**Support Vector Machine (SVM)** demonstrated the best overall performance among the five classification algorithms.
+| Required feature | Implemented | Description |
+|---|---|---|
+| Dataset upload option (CSV, test data only) | Yes | Sidebar file uploader for a test CSV, plus a checkbox to use the bundled `test_data.csv`. The file must contain the 57 feature columns and the `is_spam` column; missing columns are reported with an error message. |
+| Model selection dropdown | Yes | Dropdown with all five saved models: Logistic Regression, Decision Tree, KNN, Naive Bayes and Support Vector Machine. |
+| Display of evaluation metrics | Yes | Six metric cards: Accuracy, AUC, Precision, Recall, F1 Score and MCC, computed on the uploaded data. |
+| Confusion matrix or classification report | Yes | Both are shown side by side: a confusion matrix heat map and a per-class classification report. A preview of the uploaded data is available in an expander. |
 
-It achieved the highest accuracy, AUC, precision, F1 score, and MCC, making it the best-performing model based on the reported evaluation metrics.
+The uploaded CSV needs the 57 numeric feature columns and the `is_spam` column; extra columns and a different column order are accepted. The test file used is `test_data.csv` in the repository root. The app only loads the saved pipelines from the `model` folder with joblib and calls `predict` and `predict_proba`; it never trains or fits anything on the uploaded data, so the numbers it shows match the table above.
 
-## 5. Streamlit Web Application
+## Technologies used
 
-An interactive web application named **Spam Mail Detector** is developed using Streamlit.
-
-The application allows users to evaluate the performance of saved machine learning models on uploaded test email data.
-
-### Application Features
-
-1. **Test Dataset Upload:** Allows users to upload a CSV file containing 57 numerical features and the `is_spam` target column.
-2. **Model Selection:** Provides a dropdown menu to select one of the five trained classification models.
-3. **Evaluation Metrics:** Displays Accuracy, AUC, Precision, Recall, F1 Score, and MCC.
-4. **Confusion Matrix:** Displays a confusion matrix to visualize the classification results.
-5. **Classification Report:** Displays the precision and recall of spam and non-spam classes.
-
-The application loads the previously saved trained models and evaluates them on the uploaded test dataset without retraining.
-
-### Live Application Link
-
-https://varshithajgwda-spam-email-classifier-app-ofaxnb.streamlit.app/
-
-## 6. Project Repository Structure
-
-```text
-spam-email-classifier/
-│
-├── data/
-│   ├── spambase.csv
-│   └── .gitkeep
-│
-├── model/
-│   ├── logistic_regression.joblib
-│   ├── decision_tree.joblib
-│   ├── knn.joblib
-│   ├── naive_bayes.joblib
-│   └── svm.joblib
-│
-├── results/
-│   └── metrics.csv
-│
-├── app.py
-├── requirements.txt
-├── test_data.csv
-└── README.md
-```
-
-## 7. Technologies Used
-
-- Python
-- Pandas
-- NumPy
-- Scikit-learn
-- Streamlit
-- Matplotlib
-- Seaborn
-- Joblib
-- GitHub
-
-## 8. Conclusion
-
-This project demonstrates the implementation and comparison of five machine learning classification algorithms for spam email detection using the Spambase dataset.
-
-The performance evaluation shows that Support Vector Machine achieved the best overall results among the five models.
-
-The Streamlit application provides an interactive interface for uploading test data, selecting trained models, and visualizing their classification performance.
-
-The project demonstrates an end-to-end machine learning workflow involving dataset handling, model evaluation, model saving, GitHub repository management, and web application deployment.
+Python, pandas, NumPy, scikit-learn, Streamlit, Matplotlib, joblib, GitHub.
